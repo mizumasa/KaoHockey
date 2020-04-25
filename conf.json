@@ -1,0 +1,6 @@
+{
+  "SOMETHING_PATH": "******",
+  "SOMETHING_DIR": "******",
+  "FFMPEG_LOG_LEVEL": "-loglevel info",
+  "FFMPEG_DIR": "/usr/local/bin/"
+}
