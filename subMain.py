@@ -221,7 +221,7 @@ def Process2(ptomain,maintop,frame_conn,frame_conn_face):
         pass
 
 
-def subMain(args):
+def subMain():
     sg.change_look_and_feel('DarkBlue')
 
     # define the window layout

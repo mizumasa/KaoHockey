@@ -10,21 +10,15 @@ import shutil
 import sys
 import multiprocessing as mp
 
-from add_args import AddArgs
 from common import *
 
 SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 from subMain import subMain
 
-def main(args):
-    print_log('Info', 'main.py is called [' + str(args) + ']')
-    res = subMain(args)
+def main():
+    res = subMain()
     return res
 
 if __name__ == "__main__":
     mp.freeze_support()
-    args = AddArgs().get_args()
-    DEBUG_LOG_LEVEL = args.log_level
-    print(TEMP_DIR)
-    atexit.register(shutil.rmtree, TEMP_DIR)
-    sys.exit(main(args))
+    sys.exit(main())
