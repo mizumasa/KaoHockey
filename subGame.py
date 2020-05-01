@@ -103,7 +103,7 @@ class Game:
                         soundPoint()
                     else:
                         soundWall()
-            if x > self.window_w - edge_margin:
+            if x > (self.window_w - edge_margin):
                 if ball.flip_x():
                     if self.goal[2] is not None:
                         self.score[self.goal[2]]+=1
@@ -119,7 +119,7 @@ class Game:
                         soundPoint()
                     else:
                         soundWall()
-            if y > self.window_h - edge_margin:
+            if y > (self.window_h - edge_margin):
                 if ball.flip_y():
                     if self.goal[3] is not None:
                         self.score[self.goal[3]]+=1

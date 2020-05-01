@@ -26,6 +26,8 @@ from multiprocessing import Array
 from subGame import Game, BALL_S
 
 SHOW_W_MAIN = 640
+SHOW_W_FULL = 1920
+
 SHOW_W_SUB = 40
 FPS = 24
 
@@ -192,7 +194,7 @@ def Process2(ptomain,maintop,frame_conn,frame_conn_face):
                     ret = getPointFromEyes(eyes,gray_face)
                     if ret is not None:
                         output.append(addOffset(ret,x,y))
-                    cv2.imshow('my image',gray_face)
+                    #cv2.imshow('my image',gray_face)
 
             if len(faces) > 0:
                 x,y,w,h = find_nearest_face(faces,ball_x,ball_y)
@@ -226,7 +228,8 @@ def subMain(args):
     layout = [
         [sg.Image(filename='', key='screen', enable_events=True),sg.Image(filename='', key='playground')],
 
-        [sg.Checkbox('Screen', default = False, size=(10, 1), key='switch_screen'),sg.Checkbox('Face Ball', default = False, size=(10, 1), key='switch_ball')],
+        [sg.Checkbox('Screen', default = False, size=(10, 1), key='switch_screen'),sg.Checkbox('Face Ball', default = False, size=(10, 1), key='switch_ball'),
+        sg.Checkbox('Full Screen', default = False, size=(10, 1), key='full_screen')],
         [sg.Text('---',key='score1',font='Courier 20', text_color='blue'),sg.Text(':'),sg.Text('---',key='score2',font='Courier 20', text_color='red')],
         [sg.Text('Crop Left',key='crop_left_label'),sg.Slider((0, 100), 0, 0.1, orientation='h', size=(10, 15), key='crop_left'),
         sg.Text('Crop Right',key='crop_right_label'),sg.Slider((0, 100), 100, 0.1, orientation='h', size=(10, 15), key='crop_right')],
@@ -365,7 +368,14 @@ def subMain(args):
                     else:
                         game.set_ball_image()
                     game.draw(playground)
-                playscreen.update(data=cv2.imencode('.png', playground)[1].tobytes())
+                if 1:
+                    if values['full_screen']:
+                        cv2.imshow("KaoHockey",cv2.resize(playground[:,::-1,:],(SHOW_W_FULL,int(SHOW_W_FULL*playground_h/playground_w))))
+                    else:
+                        cv2.imshow("KaoHockey",playground[:,::-1,:])
+                    key = cv2.waitKey(30)
+                else:
+                    playscreen.update(data=cv2.imencode('.png', playground)[1].tobytes())
 
             else:
                 screen_w = SHOW_W_MAIN
