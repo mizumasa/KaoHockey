@@ -61,7 +61,6 @@ def Process1(ptomain,maintop,frame_conn,frame_conn2):
                     crop_grab = recv["crop_grab"]
             start = time.time()
             if crop_grab is None:
-                #img_rgb = np.asarray(ImageGrab.grab())
                 monitor = sct.monitors[1]
                 sct_img = sct.grab(monitor)
                 img_rgb = np.frombuffer(sct_img.rgb,dtype=np.uint8).reshape((sct_img.height,sct_img.width,3))
@@ -69,9 +68,7 @@ def Process1(ptomain,maintop,frame_conn,frame_conn2):
                 monitor = {"top":  crop_grab[0], "left": crop_grab[2], "width":  crop_grab[3]-crop_grab[2], "height": crop_grab[1]-crop_grab[0]}
                 sct_img = sct.grab(monitor)
                 img_rgb = np.frombuffer(sct_img.rgb,dtype=np.uint8).reshape((sct_img.height,sct_img.width,3))
-                #img_rgb = np.asarray(ImageGrab.grab(bbox=(crop_grab[2], crop_grab[0], crop_grab[3], crop_grab[1])))
             img_rgb = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2RGB)
-            #img_rgb = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2GRAY)
             if crop_grab is None:
                 valueToNdarray(frame_conn)[:] = img_rgb.flatten()
             else:
