@@ -236,17 +236,13 @@ def subMain():
     layout = [
         [sg.Image(filename='', key='screen', enable_events=True),sg.Image(filename='', key='playground')],
 
-        [sg.Checkbox('Screen', default = False, size=(10, 1), key='switch_screen'),sg.Checkbox('Face Ball', default = False, size=(10, 1), key='switch_ball'),
+        [sg.Checkbox('Team Mode', default = False, size=(10, 1), key='switch_team'),sg.Checkbox('Face Ball', default = False, size=(10, 1), key='switch_ball'),
         sg.Checkbox('Full Screen', default = False, size=(10, 1), key='full_screen')],
         [sg.Text('---',key='score1',font='Courier 20', text_color='blue'),sg.Text(':'),sg.Text('---',key='score2',font='Courier 20', text_color='red')],
-        [sg.Text('Crop Left',key='crop_left_label'),sg.Slider((0, 100), 0, 0.1, orientation='h', size=(48, 15), key='crop_left')],
-        [sg.Text('Crop Right',key='crop_right_label'),sg.Slider((0, 100), 100, 0.1, orientation='h', size=(48, 15), key='crop_right')],
-        [sg.Text('Crop Top',key='crop_top_label'),sg.Slider((0, 100), 0, 0.1, orientation='h', size=(48, 15), key='crop_top')],
-        [sg.Text('Crop Bottom',key='crop_bottom_label'),sg.Slider((0, 100), 100, 0.1, orientation='h', size=(48, 15), key='crop_bottom')],
-        [sg.Text('Left'),sg.Combo(['None', 'Team1', 'Team2'], enable_events=True, size=(10, 15), key='bound1'),
-        sg.Text('Top'),sg.Combo(['None', 'Team1', 'Team2'], enable_events=True, size=(10, 15), key='bound2'),
-        sg.Text('Right'),sg.Combo(['None', 'Team1', 'Team2'], enable_events=True, size=(10, 15), key='bound3'),
-        sg.Text('Bottom'),sg.Combo(['None', 'Team1', 'Team2'], enable_events=True, size=(10, 15), key='bound4')],
+        [sg.Text('Crop Left',key='crop_left_label'),sg.Slider((0, 100), 10, 0.1, orientation='h', size=(48, 15), key='crop_left')],
+        [sg.Text('Crop Right',key='crop_right_label'),sg.Slider((0, 100), 90, 0.1, orientation='h', size=(48, 15), key='crop_right')],
+        [sg.Text('Crop Top',key='crop_top_label'),sg.Slider((0, 100), 10, 0.1, orientation='h', size=(48, 15), key='crop_top')],
+        [sg.Text('Crop Bottom',key='crop_bottom_label'),sg.Slider((0, 100), 90, 0.1, orientation='h', size=(48, 15), key='crop_bottom')],
         [sg.Text('Mode',key='ttt',visible=False),sg.Slider((0, 4), 0, 1, orientation='h', size=(20, 15), key='detect_mode',visible=False)],
         [sg.Text('Ball',visible=False),sg.Slider((1, 30), 0, 1, orientation='h', size=(20, 15), key='ball_num',visible=False)],
         [sg.Text('Speed'),sg.Slider((1, 10), 2, 0.1, orientation='h', size=(20, 15), key='game_speed')],
@@ -471,6 +467,13 @@ def subMain():
 
 
 def draw_goal(screen,l,t,r,b,values):
+    if values["switch_team"]:
+        pass
+    else:
+        cv2.line(screen,(l,t),(r,t),(200,0,0),GOAL_WIDTH)
+        cv2.line(screen,(l,b),(r,b),(0,0,200),GOAL_WIDTH)
+    return
+"""
     if values["bound1"] == "Team1":
         cv2.line(screen,(l,t),(l,b),(200,0,0),GOAL_WIDTH)
     if values["bound1"] == "Team2":
@@ -487,9 +490,17 @@ def draw_goal(screen,l,t,r,b,values):
         cv2.line(screen,(l,b),(r,b),(200,0,0),GOAL_WIDTH)
     if values["bound4"] == "Team2":
         cv2.line(screen,(l,b),(r,b),(0,0,200),GOAL_WIDTH)
+"""
 
 def get_goal(values):
     buf = [None,None,None,None]
+    if values["switch_team"]:
+        pass
+    else:
+        buf[1] = 0
+        buf[3] = 1 
+    return buf
+"""
     if values["bound1"] == "Team1":
         buf[0] = 0
     if values["bound1"] == "Team2":
@@ -505,9 +516,8 @@ def get_goal(values):
     if values["bound4"] == "Team1":
         buf[3] = 0
     if values["bound4"] == "Team2":
-        buf[3] = 1
-    return buf
-
+        buf[3] = 1 
+"""
 
 if __name__ == '__main__':
     argvs=sys.argv
