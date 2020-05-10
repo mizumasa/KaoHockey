@@ -72,6 +72,9 @@ class Game:
     def get_score(self):
         return self.score
 
+    def reset_score(self):
+        self.score = [0,0]
+
     def get_goal_pos(self):
         return self.goal_pos
 

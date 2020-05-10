@@ -15,7 +15,13 @@ from common import *
 SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 from subMain import subMain
 
+import datetime
+
 def main():
+    today = datetime.date.today()
+    #if today.year != 2020 or today.day != 7 or today.month != 5:
+    #    print("ng")
+    #    return
     res = subMain()
     return res
 

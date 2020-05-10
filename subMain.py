@@ -24,9 +24,11 @@ from multiprocessing import Pipe
 from multiprocessing import Array
 
 from subGame import Game, BALL_S
+from subImage import getImage
 
-SHOW_W_MAIN = 640
+SHOW_W_MAIN = 600
 SHOW_W_FULL = 1920
+SHOW_H_FULL = 1080
 
 SHOW_W_SUB = 40
 FPS = 24
@@ -141,84 +143,93 @@ def Process2(ptomain,maintop,frame_conn,frame_conn_face):
         eye_cascade = cv2.CascadeClassifier(os.path.join(SCRIPT_DIR,"../data/haarcascade_eye.xml"))
         face_cascade = cv2.CascadeClassifier(os.path.join(SCRIPT_DIR,"../data/haarcascade_frontalface_default.xml"))
     detect_mode = 0
-    try:
+    if 1:
         while True:
-            ball_change = False
-            while maintop.poll():
-                recv = maintop.recv()
-                if "ball_x" in recv.keys():
-                    ball_x = int(recv["ball_x"])
-                if "ball_y" in recv.keys():
-                    ball_y = int(recv["ball_y"])                
-                if "ball_change" in recv.keys():
-                    ball_change = True
-                if "w" in recv.keys():
-                    p2_w = int(recv["w"])
-                if "h" in recv.keys():
-                    p2_h = int(recv["h"])
-                if "exit" in recv.keys():
-                    print("p2 got exit")
-                    return
-                if "detect_mode" in recv.keys():
-                    detect_mode = int(recv["detect_mode"])
-            start = time.time()
-            img_ary = valueToNdarray(frame_conn).astype("uint8")
-            if p2_w*p2_h == 0:
-                continue
-            else:
-                img_ary = img_ary[:p2_w*p2_h].reshape((p2_h,p2_w))
-            
-            RESIZE_SCALE = 1
-            p2_h_ = p2_h >> RESIZE_SCALE
-            p2_w_ = p2_w >> RESIZE_SCALE
-            img_ary_ = cv2.resize(img_ary,(p2_w_,p2_h_))
-            faces = []
-            if DETECT_WITH == DETECT_WITH_DLIB:
-                dets, scores, idx = dlib_detector.run(img_ary_, 0)
-                for det in dets:
-                    faces.append([det.left()<<RESIZE_SCALE,det.top()<<RESIZE_SCALE,det.width()<<RESIZE_SCALE,det.height()<<RESIZE_SCALE])
-            if DETECT_WITH == DETECT_WITH_OPENCV:
-                faces = face_cascade.detectMultiScale(img_ary_, 1.3, 5)
-            output = []
-            if detect_mode == 0:
-                for (x,y,w,h) in faces:
-                    output.append([x,y+h/4,x+w,y+h/4])
-            else:
-                for (x,y,w,h) in faces:
-                    cv2.rectangle(img_ary,(x,y),(x+w,y+h),(255,255,0),2)
-                    gray_face = img_ary[y:y+h, x:x+w] # cut the gray face frame out
-                    eyes = eye_cascade.detectMultiScale(gray_face)
-                    ret = getPointFromEyes(eyes,gray_face)
-                    if ret is not None:
-                        output.append(addOffset(ret,x,y))
-                    #cv2.imshow('my image',gray_face)
+            try:
+                ball_change = False
+                while maintop.poll():
+                    recv = maintop.recv()
+                    if "ball_x" in recv.keys():
+                        ball_x = int(recv["ball_x"])
+                    if "ball_y" in recv.keys():
+                        ball_y = int(recv["ball_y"])                
+                    if "ball_change" in recv.keys():
+                        ball_change = True
+                    if "w" in recv.keys():
+                        p2_w = int(recv["w"])
+                    if "h" in recv.keys():
+                        p2_h = int(recv["h"])
+                    if "exit" in recv.keys():
+                        print("p2 got exit")
+                        return
+                    if "detect_mode" in recv.keys():
+                        detect_mode = int(recv["detect_mode"])
+                start = time.time()
+                img_ary = valueToNdarray(frame_conn).astype("uint8")
+                if p2_w*p2_h == 0:
+                    continue
+                else:
+                    img_ary = img_ary[:p2_w*p2_h].reshape((p2_h,p2_w))
+                
+                RESIZE_SCALE = 1
+                p2_h_ = p2_h >> RESIZE_SCALE
+                p2_w_ = p2_w >> RESIZE_SCALE
+                img_ary_ = cv2.resize(img_ary,(p2_w_,p2_h_))
+                faces = []
+                if DETECT_WITH == DETECT_WITH_DLIB:
+                    dets, scores, idx = dlib_detector.run(img_ary_, 0)
+                    for det in dets:
+                        faces.append([det.left()<<RESIZE_SCALE,det.top()<<RESIZE_SCALE,det.width()<<RESIZE_SCALE,det.height()<<RESIZE_SCALE])
+                if DETECT_WITH == DETECT_WITH_OPENCV:
+                    faces = face_cascade.detectMultiScale(img_ary_, 1.3, 5)
+                output = []
+                if detect_mode == 0:
+                    for (x,y,w,h) in faces:
+                        output.append([x,y+h/4,x+w,y+h/4])
+                else:
+                    for (x,y,w,h) in faces:
+                        cv2.rectangle(img_ary,(x,y),(x+w,y+h),(255,255,0),2)
+                        gray_face = img_ary[y:y+h, x:x+w] # cut the gray face frame out
+                        eyes = eye_cascade.detectMultiScale(gray_face)
+                        ret = getPointFromEyes(eyes,gray_face)
+                        if ret is not None:
+                            output.append(addOffset(ret,x,y))
+                        #cv2.imshow('my image',gray_face)
 
-            if len(faces) > 0:
-                x,y,w,h = find_nearest_face(faces,ball_x,ball_y)
-                gray_face = img_ary[y:y+h, x:x+w]
-                if gray_face.shape[0]>50 and gray_face.shape[1]>50:
-                    frame_conn_face_ary = gray_face.copy()
-            if ball_change and frame_conn_face_ary is not None:
-                frame_conn_face_ary = cv2.cvtColor(frame_conn_face_ary, cv2.COLOR_GRAY2RGB)
-                valueToNdarray(frame_conn_face)[:] = cv2.resize(frame_conn_face_ary,(BALL_S,BALL_S)).flatten()
+                if len(faces) > 0:
+                    x,y,w,h = find_nearest_face(faces,ball_x,ball_y)
+                    gray_face = img_ary[y:y+h, x:x+w]
+                    if gray_face.shape[0]>50 and gray_face.shape[1]>50:
+                        frame_conn_face_ary = gray_face.copy()
+                if ball_change and frame_conn_face_ary is not None:
+                    print(frame_conn_face_ary.shape)
+                    if len(frame_conn_face_ary.shape) == 3:
+                        frame_conn_face_ary = frame_conn_face_ary[:,:,0] 
+                    frame_conn_face_ary = cv2.cvtColor(frame_conn_face_ary, cv2.COLOR_GRAY2RGB)
+                    valueToNdarray(frame_conn_face)[:] = cv2.resize(frame_conn_face_ary,(BALL_S,BALL_S)).flatten()
 
-            if 0:
-                cv2.imshow("dlib",img_ary)
-                key = cv2.waitKey(1)
-            ptomain.send({"eyes":output})
+                if 0:
+                    cv2.imshow("dlib",img_ary)
+                    key = cv2.waitKey(1)
+                ptomain.send({"eyes":output})
 
-            elapsed_times.append(time.time() - start)
-            if count%FPS == 0:
-                print ("elapsed_time 2(FBS):{0:.0f}".format(sum(elapsed_times)*1000./FPS) + "[msec] {0:.0f}[fps]".format(FPS * 1.0/ sum(elapsed_times)))
-                elapsed_times = []
-            count += 1
+                elapsed_times.append(time.time() - start)
+                if count%FPS == 0:
+                    print ("elapsed_time 2(FBS):{0:.0f}".format(sum(elapsed_times)*1000./FPS) + "[msec] {0:.0f}[fps]".format(FPS * 1.0/ sum(elapsed_times)))
+                    elapsed_times = []
+                count += 1
+            except KeyboardInterrupt:
+                print("Process 2 loop Error")
             #time.sleep(0.1)
-    except KeyboardInterrupt:
-        print("Process 2 Error")
-        pass
+    #except KeyboardInterrupt:
+    #    print("Process 2 Error")
+    #    pass
 
 
 def subMain():
+    cv2.imshow('KaoHockey',getImage())
+    cv2.waitKey(1)
+    
     sg.change_look_and_feel('DarkBlue')
 
     # define the window layout
@@ -228,22 +239,26 @@ def subMain():
         [sg.Checkbox('Screen', default = False, size=(10, 1), key='switch_screen'),sg.Checkbox('Face Ball', default = False, size=(10, 1), key='switch_ball'),
         sg.Checkbox('Full Screen', default = False, size=(10, 1), key='full_screen')],
         [sg.Text('---',key='score1',font='Courier 20', text_color='blue'),sg.Text(':'),sg.Text('---',key='score2',font='Courier 20', text_color='red')],
-        [sg.Text('Crop Left',key='crop_left_label'),sg.Slider((0, 100), 0, 0.1, orientation='h', size=(10, 15), key='crop_left'),
-        sg.Text('Crop Right',key='crop_right_label'),sg.Slider((0, 100), 100, 0.1, orientation='h', size=(10, 15), key='crop_right')],
-        [sg.Text('Crop Top',key='crop_top_label'),sg.Slider((0, 100), 0, 0.1, orientation='h', size=(10, 15), key='crop_top'),
-        sg.Text('Crop Bottom',key='crop_bottom_label'),sg.Slider((0, 100), 100, 0.1, orientation='h', size=(10, 15), key='crop_bottom')],
+        [sg.Text('Crop Left',key='crop_left_label'),sg.Slider((0, 100), 0, 0.1, orientation='h', size=(48, 15), key='crop_left')],
+        [sg.Text('Crop Right',key='crop_right_label'),sg.Slider((0, 100), 100, 0.1, orientation='h', size=(48, 15), key='crop_right')],
+        [sg.Text('Crop Top',key='crop_top_label'),sg.Slider((0, 100), 0, 0.1, orientation='h', size=(48, 15), key='crop_top')],
+        [sg.Text('Crop Bottom',key='crop_bottom_label'),sg.Slider((0, 100), 100, 0.1, orientation='h', size=(48, 15), key='crop_bottom')],
         [sg.Text('Left'),sg.Combo(['None', 'Team1', 'Team2'], enable_events=True, size=(10, 15), key='bound1'),
         sg.Text('Top'),sg.Combo(['None', 'Team1', 'Team2'], enable_events=True, size=(10, 15), key='bound2'),
         sg.Text('Right'),sg.Combo(['None', 'Team1', 'Team2'], enable_events=True, size=(10, 15), key='bound3'),
         sg.Text('Bottom'),sg.Combo(['None', 'Team1', 'Team2'], enable_events=True, size=(10, 15), key='bound4')],
-        [sg.Text('Mode',key='ttt'),sg.Slider((0, 4), 0, 1, orientation='h', size=(20, 15), key='detect_mode')],
-        [sg.Text('Ball'),sg.Slider((1, 30), 0, 1, orientation='h', size=(20, 15), key='ball_num')],
-        [sg.Text('Speed'),sg.Slider((1, 10), 4, 0.1, orientation='h', size=(20, 15), key='game_speed')],
-        [sg.Button('Save', size=(10, 1)),sg.Button('Exit', size=(10, 1))]
+        [sg.Text('Mode',key='ttt',visible=False),sg.Slider((0, 4), 0, 1, orientation='h', size=(20, 15), key='detect_mode',visible=False)],
+        [sg.Text('Ball',visible=False),sg.Slider((1, 30), 0, 1, orientation='h', size=(20, 15), key='ball_num',visible=False)],
+        [sg.Text('Speed'),sg.Slider((1, 10), 2, 0.1, orientation='h', size=(20, 15), key='game_speed')],
+        [sg.Button('Start', size=(10, 1),key='button_start'),
+        sg.Button('Stop', size=(10, 1),key='button_stop',disabled=True),
+        sg.Button('Save', size=(10, 1)),
+        sg.Button('Reset', size=(10, 1)),
+        sg.Button('Exit', size=(10, 1))]
     ]
 
     # create the window and show it without the plot
-    window = sg.Window('顔ホッケー',layout,location=(100, 100),finalize=True)
+    window = sg.Window('KaoHockey',layout,location=(100, 100),no_titlebar=False, alpha_channel=.9, grab_anywhere=False)
     elapsed_times = []
     count = 0
 
@@ -289,12 +304,26 @@ def subMain():
             values['count'] = count
             if event == 'screen':
                 print(values)
+            if event == 'Reset':
+                if game is not None:
+                    game.reset_score()
             if event == 'Save':
                 f = open('param.json', 'w')
                 json.dump(values, f)
                 f.close()
-            if event == 'Mp4':
-                print("")
+            if event == 'button_start':
+                if status == MODE_INIT:
+                    status = MODE_PLAY
+                    window.Element('button_start').Update(disabled=True)
+                    window.Element('button_stop').Update(disabled=False)
+                    window.refresh()
+            if event == 'button_stop':
+                if status == MODE_PLAY:
+                    status = MODE_INIT
+                    window.Element('button_start').Update(disabled=False)
+                    window.Element('button_stop').Update(disabled=True)
+                    window.refresh()
+
                     
             if event == 'Exit' or event is None:
                 break
@@ -331,7 +360,8 @@ def subMain():
             playground_h = playground.shape[0]
             playground_w = playground.shape[1]
 
-            status = values['switch_screen'] 
+            #status = values['switch_screen']
+            
 
             if status == MODE_PLAY:
                 detected_eyes_scale = get_detected_eyes_scale(detected_eyes,SHOW_W_MAIN,playground_w)
@@ -365,9 +395,14 @@ def subMain():
                     else:
                         game.set_ball_image()
                     game.draw(playground)
+                    cv2.putText(playground,str(score[1]),(int(playground_w/2),int(playground_h/2)-30),cv2.FONT_HERSHEY_SIMPLEX,1.0,(255,0,0),thickness=2)
+                    cv2.putText(playground,str(score[0]),(int(playground_w/2),int(playground_h/2)+30),cv2.FONT_HERSHEY_SIMPLEX,1.0,(0,0,255),thickness=2)
                 if 1:
                     if values['full_screen']:
-                        cv2.imshow("KaoHockey",cv2.resize(playground[:,::-1,:],(SHOW_W_FULL,int(SHOW_W_FULL*playground_h/playground_w))))
+                        if playground_h * 16 / 9 > playground_w:
+                            cv2.imshow("KaoHockey",cv2.resize(playground[:,::-1,:],(int(SHOW_H_FULL*playground_w/playground_h),SHOW_H_FULL)))
+                        else:
+                            cv2.imshow("KaoHockey",cv2.resize(playground[:,::-1,:],(SHOW_W_FULL,int(SHOW_W_FULL*playground_h/playground_w))))
                     else:
                         cv2.imshow("KaoHockey",playground[:,::-1,:])
                     key = cv2.waitKey(30)
@@ -386,14 +421,14 @@ def subMain():
 
             if status != status_pre:
                 window['screen'].update(data="")
-                window.Element('crop_left').Update(visible=not status)
                 window.Element('crop_left_label').Update(visible=not status)
-                window.Element('crop_right').Update(visible=not status)
+                window.Element('crop_left').Update(visible=not status)
                 window.Element('crop_right_label').Update(visible=not status)
-                window.Element('crop_top').Update(visible=not status)
+                window.Element('crop_right').Update(visible=not status)
                 window.Element('crop_top_label').Update(visible=not status)
-                window.Element('crop_bottom').Update(visible=not status)
+                window.Element('crop_top').Update(visible=not status)
                 window.Element('crop_bottom_label').Update(visible=not status)
+                window.Element('crop_bottom').Update(visible=not status)
                 if status == MODE_PLAY:
                     crop_grab = [crop_top,crop_bottom,crop_left,crop_right]
                     crop_grab_size = (crop_right-crop_left)*(crop_bottom-crop_top)*3
