@@ -436,8 +436,14 @@ def subMain():
                         score = game.get_score()
                         window.FindElement('score1').Update(str(score[1]))
                         window.FindElement('score2').Update(str(score[0]))
-                        cv2.putText(playground,str(score[1]),(int(playground_w/2)-10,int(playground_h/2)-30),cv2.FONT_HERSHEY_SIMPLEX,1.0,(255,0,0),thickness=2)
-                        cv2.putText(playground,str(score[0]),(int(playground_w/2)-10,int(playground_h/2)+30),cv2.FONT_HERSHEY_SIMPLEX,1.0,(0,0,255),thickness=2)
+                        if values['flip_text']:
+                            cv2.putText(playground,str(score[1]),(playground_w-50,50),cv2.FONT_HERSHEY_SIMPLEX,1.0,(255,0,0),thickness=2)
+                            cv2.putText(playground,str(score[0]),(30,playground_h-30),cv2.FONT_HERSHEY_SIMPLEX,1.0,(0,0,255),thickness=2)
+                        else:
+                            cv2.putText(playground,str(score[1]),(30,50),cv2.FONT_HERSHEY_SIMPLEX,1.0,(255,0,0),thickness=2)
+                            cv2.putText(playground,str(score[0]),(playground_w-50,playground_h-30),cv2.FONT_HERSHEY_SIMPLEX,1.0,(0,0,255),thickness=2)    
+                            #cv2.putText(playground,str(score[1]),(int(playground_w/2)-10,int(playground_h/2)-30),cv2.FONT_HERSHEY_SIMPLEX,1.0,(255,0,0),thickness=2)
+                            #cv2.putText(playground,str(score[0]),(int(playground_w/2)-10,int(playground_h/2)+30),cv2.FONT_HERSHEY_SIMPLEX,1.0,(0,0,255),thickness=2)    
                     else:
                         cooperate_score = game.get_cooperate_score()
                         cv2.putText(playground,str(cooperate_score),(int(playground_w/2)-30,int(playground_h/2)+25),cv2.FONT_HERSHEY_SIMPLEX,3.0,(255,0,0),thickness=10)
