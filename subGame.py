@@ -35,6 +35,15 @@ def check_collision(x,y,vy,eyes):
     else:
         return None
 
+def check_collision_h(x,y,vx,eyes):
+    """
+    eyes = [lx,ly,rx,ry]
+    """
+    if ( (eyes[1] < y) and (y < eyes[3]) and (abs(x - eyes[0]) < abs(vx)) ):
+        return 2.0 * (y - eyes[1]) / (eyes[3] - eyes[1]) - 1
+    else:
+        return None
+
 class Game:
     def __init__(self,w,h):
         self.window_w = w
@@ -43,17 +52,26 @@ class Game:
         self.count = 0
         self.speed = 1.0
         self.goal = [None,None,None,None]
+        self.cooperate_mode = False
+        self.cooperate_score = 0
         self.score = [0,0]
         self.ball_num = 1
         self.ball_image = TEST_IMAGE
         self.goal_pos = []
         self.ball_pos = []
+        self.player_direction_h = False
 
     def set_ball_image(self,image=None):
         self.ball_image = image        
 
     def set_speed(self,speed):
         self.speed = speed
+
+    def set_cooperate_mode(self,value):
+        self.cooperate_mode = value
+
+    def set_player_direction_h(self,value):
+        self.player_direction_h = value
 
     def set_ball_num(self,num):
         self.ball_num = int(num)
@@ -72,8 +90,12 @@ class Game:
     def get_score(self):
         return self.score
 
+    def get_cooperate_score(self):
+        return self.cooperate_score
+
     def reset_score(self):
         self.score = [0,0]
+        self.cooperate_score = 0
 
     def get_goal_pos(self):
         return self.goal_pos
@@ -91,19 +113,41 @@ class Game:
         for ball in self.ball:
             x,y = ball.get_next_pos()
             self.ball_pos.append([x,y])
-            vy = ball.get_speed()
-            for eyes in detected_eyes:
-                ret = check_collision(x,y,vy,eyes)
-                if ret is not None:
-                    ball.force_x(ret)
-                    ball.flip_y()
-                    soundBar()
+            vx, vy = ball.get_speed()
+
+            if self.player_direction_h:
+                for eyes in detected_eyes:
+                    ret = check_collision_h(x,y,vx,eyes)
+                    if ret is not None:
+                        ball.force_y(ret)
+                        ball.flip_x()
+                        if self.cooperate_mode:
+                            self.cooperate_score += 1                            
+                            soundPoint()
+                        else:
+                            soundBar()
+            else:
+                for eyes in detected_eyes:
+                    ret = check_collision(x,y,vy,eyes)
+                    if ret is not None:
+                        ball.force_x(ret)
+                        ball.flip_y()
+                        if self.cooperate_mode:
+                            self.cooperate_score += 1                            
+                            soundPoint()
+                        else:
+                            soundBar()
+            
             if x < 0 + edge_margin:
                 if ball.flip_x():
                     if self.goal[0] is not None:
                         self.score[self.goal[0]]+=1
                         self.goal_pos.append([x,y])
-                        soundPoint()
+                        if self.cooperate_mode:
+                            self.cooperate_score = 0
+                            soundWall()
+                        else:
+                            soundPoint()
                     else:
                         soundWall()
             if x > (self.window_w - edge_margin):
@@ -111,7 +155,11 @@ class Game:
                     if self.goal[2] is not None:
                         self.score[self.goal[2]]+=1
                         self.goal_pos.append([x,y])
-                        soundPoint()
+                        if self.cooperate_mode:
+                            self.cooperate_score = 0
+                            soundWall()
+                        else:
+                            soundPoint()
                     else:
                         soundWall()
             if y < 0 + edge_margin:
@@ -119,7 +167,11 @@ class Game:
                     if self.goal[1] is not None:
                         self.score[self.goal[1]]+=1
                         self.goal_pos.append([x,y])
-                        soundPoint()
+                        if self.cooperate_mode:
+                            self.cooperate_score = 0
+                            soundWall()
+                        else:
+                            soundPoint()
                     else:
                         soundWall()
             if y > (self.window_h - edge_margin):
@@ -127,7 +179,11 @@ class Game:
                     if self.goal[3] is not None:
                         self.score[self.goal[3]]+=1
                         self.goal_pos.append([x,y])
-                        soundPoint()
+                        if self.cooperate_mode:
+                            self.cooperate_score = 0
+                            soundWall()
+                        else:
+                            soundPoint()
                     else:
                         soundWall()
             ball.update(self.speed)
@@ -151,7 +207,7 @@ class Ball:
         self.angle = 0.0
         self.speed = 1.0
     def get_speed(self):
-        return self.speed * self.vy
+        return self.speed * self.vx, self.speed * self.vy
     def get_next_pos(self):
         return self.x + self.vx, self.y + self.vy 
 
@@ -171,13 +227,23 @@ class Ball:
     
     def force_x(self,ret):
         v = (self.vx ** 2 + self.vy ** 2) ** 0.5
-        self.vx = min(v-0.2,max(-v+0.2, self.vx + ret))
+        self.vx = min(v-0.3,max(-v+0.3, self.vx + ret))
         if self.vy > 0:
             #self.vy =  max(0.1,(v ** 2 - self.vx ** 2) ** 0.5)
             self.vy =  (v ** 2 - self.vx ** 2) ** 0.5
         else:
             #self.vy = - max(0.1,((v ** 2 - self.vx ** 2) ** 0.5))
             self.vy = - ((v ** 2 - self.vx ** 2) ** 0.5)
+
+    def force_y(self,ret):
+        v = (self.vx ** 2 + self.vy ** 2) ** 0.5
+        self.vy = min(v-0.3,max(-v+0.3, self.vy + ret))
+        if self.vx > 0:
+            #self.vy =  max(0.1,(v ** 2 - self.vx ** 2) ** 0.5)
+            self.vx =  (v ** 2 - self.vy ** 2) ** 0.5
+        else:
+            #self.vy = - max(0.1,((v ** 2 - self.vx ** 2) ** 0.5))
+            self.vx = - ((v ** 2 - self.vy ** 2) ** 0.5)
 
     def update(self,speed):
         self.speed = speed

@@ -42,6 +42,8 @@ DETECT_WITH = DETECT_WITH_DLIB
 
 GOAL_WIDTH = 7
 
+RESIZE_SCALE_DEFAULT = 2.0
+
 def valueToNdarray(v):
     return np.ctypeslib.as_array(v.get_obj())
 
@@ -143,6 +145,8 @@ def Process2(ptomain,maintop,frame_conn,frame_conn_face):
         eye_cascade = cv2.CascadeClassifier(os.path.join(SCRIPT_DIR,"../data/haarcascade_eye.xml"))
         face_cascade = cv2.CascadeClassifier(os.path.join(SCRIPT_DIR,"../data/haarcascade_frontalface_default.xml"))
     detect_mode = 0
+    resize_scale = 2
+    result_pre = []
     if 1:
         while True:
             try:
@@ -164,6 +168,8 @@ def Process2(ptomain,maintop,frame_conn,frame_conn_face):
                         return
                     if "detect_mode" in recv.keys():
                         detect_mode = int(recv["detect_mode"])
+                    if "detect_level" in recv.keys():
+                        resize_scale = float(recv["detect_level"])
                 start = time.time()
                 img_ary = valueToNdarray(frame_conn).astype("uint8")
                 if p2_w*p2_h == 0:
@@ -171,21 +177,20 @@ def Process2(ptomain,maintop,frame_conn,frame_conn_face):
                 else:
                     img_ary = img_ary[:p2_w*p2_h].reshape((p2_h,p2_w))
                 
-                RESIZE_SCALE = 1
-                p2_h_ = p2_h >> RESIZE_SCALE
-                p2_w_ = p2_w >> RESIZE_SCALE
+                p2_h_ = int(p2_h / resize_scale)
+                p2_w_ = int(p2_w / resize_scale)
                 img_ary_ = cv2.resize(img_ary,(p2_w_,p2_h_))
                 faces = []
                 if DETECT_WITH == DETECT_WITH_DLIB:
                     dets, scores, idx = dlib_detector.run(img_ary_, 0)
                     for det in dets:
-                        faces.append([det.left()<<RESIZE_SCALE,det.top()<<RESIZE_SCALE,det.width()<<RESIZE_SCALE,det.height()<<RESIZE_SCALE])
+                        faces.append([int(det.left()*resize_scale),int(det.top()*resize_scale),int(det.width()*resize_scale),int(det.height()*resize_scale)])
                 if DETECT_WITH == DETECT_WITH_OPENCV:
                     faces = face_cascade.detectMultiScale(img_ary_, 1.3, 5)
                 output = []
                 if detect_mode == 0:
                     for (x,y,w,h) in faces:
-                        output.append([x,y+h/4,x+w,y+h/4])
+                        output.append([x,y,w,h])
                 else:
                     for (x,y,w,h) in faces:
                         cv2.rectangle(img_ary,(x,y),(x+w,y+h),(255,255,0),2)
@@ -195,6 +200,16 @@ def Process2(ptomain,maintop,frame_conn,frame_conn_face):
                         if ret is not None:
                             output.append(addOffset(ret,x,y))
                         #cv2.imshow('my image',gray_face)
+                for (x_p,y_p,w_p,h_p) in result_pre:
+                    use_past = True
+                    x_c = x_p+w_p/2
+                    y_c = y_p+h_p/2
+                    for (x,y,w,h) in faces:
+                        if x < x_c and x_c < x+w and y < y_c and y_c < y+h:
+                            use_past = False
+                    if use_past:
+                        output.append([x_p,y_p,w_p,h_p])
+                result_pre = faces
 
                 if len(faces) > 0:
                     x,y,w,h = find_nearest_face(faces,ball_x,ball_y)
@@ -236,7 +251,11 @@ def subMain():
     layout = [
         [sg.Image(filename='', key='screen', enable_events=True),sg.Image(filename='', key='playground')],
 
-        [sg.Checkbox('Team Mode', default = False, size=(10, 1), key='switch_team'),sg.Checkbox('Face Ball', default = False, size=(10, 1), key='switch_ball'),
+        [sg.Checkbox('Team Mode', default = False, size=(10, 1), key='switch_team'),
+        sg.Checkbox('VS Mode', default = True, size=(10, 1), key='vs_mode'),
+        sg.Checkbox('Face Ball', default = False, size=(10, 1), key='switch_ball'),
+        sg.Checkbox('Flip Screen', default = True, size=(10, 1), key='flip_screen'),
+        sg.Checkbox('Flip Text', default = True, size=(10, 1), key='flip_text'),
         sg.Checkbox('Full Screen', default = False, size=(10, 1), key='full_screen')],
         [sg.Text('---',key='score1',font='Courier 20', text_color='blue'),sg.Text(':'),sg.Text('---',key='score2',font='Courier 20', text_color='red')],
         [sg.Text('Crop Left',key='crop_left_label'),sg.Slider((0, 100), 10, 0.1, orientation='h', size=(48, 15), key='crop_left')],
@@ -246,6 +265,8 @@ def subMain():
         [sg.Text('Mode',key='ttt',visible=False),sg.Slider((0, 4), 0, 1, orientation='h', size=(20, 15), key='detect_mode',visible=False)],
         [sg.Text('Ball',visible=False),sg.Slider((1, 30), 0, 1, orientation='h', size=(20, 15), key='ball_num',visible=False)],
         [sg.Text('Speed'),sg.Slider((1, 10), 2, 0.1, orientation='h', size=(20, 15), key='game_speed')],
+        [sg.Text('Detect Level'),sg.Slider((1, 10), 2, 0.1, orientation='h', size=(20, 15), key='detect_level')],
+        [sg.Text('Bar Assist'),sg.Slider((0, 40), 0, 0.1, orientation='h', size=(20, 15), key='bar_assist')],
         [sg.Button('Start', size=(10, 1),key='button_start'),
         sg.Button('Stop', size=(10, 1),key='button_stop',disabled=True),
         sg.Button('Save', size=(10, 1)),
@@ -293,6 +314,7 @@ def subMain():
     crop_bottom = 0
     score = [0,0]
     playscreen = window.FindElement("playground")
+    vs_mode_pre = True
     while True:
         try:
             start = time.time()
@@ -346,6 +368,8 @@ def subMain():
                 recv = parent_ptomain2.recv()
                 if "eyes" in recv.keys():
                     detected_eyes = recv["eyes"]
+                    detected_eyes = extend_eyes(detected_eyes,values)
+                    detected_eyes = make_bar(detected_eyes,values)
             for eyes in detected_eyes:
                 cv2.line(playground,(int(eyes[0]),int(eyes[1])),(int(eyes[2]),int(eyes[3])),(255,255,0),20)
 
@@ -369,38 +393,65 @@ def subMain():
 
                 playground = cv2.resize(playground,(playground_w,playground_h))
                 if game is not None:
+
+                    game.set_goal(get_goal(values))
+                    game.set_player_direction_h(values["switch_team"])
+                    game.set_cooperate_mode(not values["vs_mode"])
+
                     game.set_speed(values['game_speed'])
                     game.update(detected_eyes=detected_eyes_scale)
                     goal_pos = game.get_goal_pos()
                     ball_pos = game.get_ball_pos()
+                    child_maintop2_msg = {}
+                    child_maintop2_msg["detect_level"]=values['detect_level']
                     if goal_pos != []:
-                        child_maintop2.send({"ball_x":goal_pos[0][0] / resize_ratio})
-                        child_maintop2.send({"ball_y":goal_pos[0][1] / resize_ratio})                        
-                        child_maintop2.send({"ball_change":None})
+                        child_maintop2_msg["ball_x"]=goal_pos[0][0] / resize_ratio
+                        child_maintop2_msg["ball_y"]=goal_pos[0][1] / resize_ratio                        
+                        child_maintop2_msg["ball_change"]=None
                     elif ball_pos != []:
-                        child_maintop2.send({"ball_x":ball_pos[0][0] / resize_ratio})
-                        child_maintop2.send({"ball_y":ball_pos[0][1] / resize_ratio})                        
-                    child_maintop2.send({"w":playground_gray_w})
-                    child_maintop2.send({"h":playground_gray_h})
+                        child_maintop2_msg["ball_x"]=ball_pos[0][0] / resize_ratio
+                        child_maintop2_msg["ball_y"]=ball_pos[0][1] / resize_ratio                        
+                    child_maintop2_msg["w"]=playground_gray_w
+                    child_maintop2_msg["h"]=playground_gray_h
+                    child_maintop2.send(child_maintop2_msg)
 
-                    score = game.get_score()
-                    window.FindElement('score1').Update(str(score[1]))
-                    window.FindElement('score2').Update(str(score[0]))
+
                     if values["switch_ball"]:
                         game.set_ball_image(valueToNdarray(frame_conn3).astype("uint8").reshape((BALL_S,BALL_S,3)))
                     else:
                         game.set_ball_image()
                     game.draw(playground)
-                    cv2.putText(playground,str(score[1]),(int(playground_w/2),int(playground_h/2)-30),cv2.FONT_HERSHEY_SIMPLEX,1.0,(255,0,0),thickness=2)
-                    cv2.putText(playground,str(score[0]),(int(playground_w/2),int(playground_h/2)+30),cv2.FONT_HERSHEY_SIMPLEX,1.0,(0,0,255),thickness=2)
+
+                    if values["vs_mode"] != vs_mode_pre:
+                        game.reset_score()
+                        if values["vs_mode"]:
+                            pass                           
+                        else:
+                            window.FindElement('score1').Update('---')
+                            window.FindElement('score2').Update('---')
+
+                    if values['flip_text']:
+                        playground = playground[:,::-1,:].copy()
+                    if values["vs_mode"]:
+                        score = game.get_score()
+                        window.FindElement('score1').Update(str(score[1]))
+                        window.FindElement('score2').Update(str(score[0]))
+                        cv2.putText(playground,str(score[1]),(int(playground_w/2)-10,int(playground_h/2)-30),cv2.FONT_HERSHEY_SIMPLEX,1.0,(255,0,0),thickness=2)
+                        cv2.putText(playground,str(score[0]),(int(playground_w/2)-10,int(playground_h/2)+30),cv2.FONT_HERSHEY_SIMPLEX,1.0,(0,0,255),thickness=2)
+                    else:
+                        cooperate_score = game.get_cooperate_score()
+                        cv2.putText(playground,str(cooperate_score),(int(playground_w/2)-30,int(playground_h/2)+25),cv2.FONT_HERSHEY_SIMPLEX,3.0,(255,0,0),thickness=10)
+                        
                 if 1:
+                    if (values['flip_screen'] and (not values['flip_text'])) or ((not values['flip_screen']) and values['flip_text']):
+                        playground = playground[:,::-1,:]
                     if values['full_screen']:
                         if playground_h * 16 / 9 > playground_w:
-                            cv2.imshow("KaoHockey",cv2.resize(playground[:,::-1,:],(int(SHOW_H_FULL*playground_w/playground_h),SHOW_H_FULL)))
+                            cv2.imshow("KaoHockey",cv2.resize(playground,(int(SHOW_H_FULL*playground_w/playground_h),SHOW_H_FULL)))
                         else:
-                            cv2.imshow("KaoHockey",cv2.resize(playground[:,::-1,:],(SHOW_W_FULL,int(SHOW_W_FULL*playground_h/playground_w))))
+                            cv2.imshow("KaoHockey",cv2.resize(playground,(SHOW_W_FULL,int(SHOW_W_FULL*playground_h/playground_w))))
                     else:
-                        cv2.imshow("KaoHockey",playground[:,::-1,:])
+                        cv2.imshow("KaoHockey",playground)
                     key = cv2.waitKey(30)
                 else:
                     playscreen.update(data=cv2.imencode('.png', playground)[1].tobytes())
@@ -417,20 +468,21 @@ def subMain():
 
             if status != status_pre:
                 window['screen'].update(data="")
-                window.Element('crop_left_label').Update(visible=not status)
+                #window.Element('switch_team').Update(disabled = status)
+                #window.Element('vs_mode').Update(disabled = status)
+                #window.Element('crop_left_label').Update(visible=not status)
                 window.Element('crop_left').Update(visible=not status)
-                window.Element('crop_right_label').Update(visible=not status)
+                #window.Element('crop_right_label').Update(visible=not status)
                 window.Element('crop_right').Update(visible=not status)
-                window.Element('crop_top_label').Update(visible=not status)
+                #window.Element('crop_top_label').Update(visible=not status)
                 window.Element('crop_top').Update(visible=not status)
-                window.Element('crop_bottom_label').Update(visible=not status)
+                #window.Element('crop_bottom_label').Update(visible=not status)
                 window.Element('crop_bottom').Update(visible=not status)
                 if status == MODE_PLAY:
                     crop_grab = [crop_top,crop_bottom,crop_left,crop_right]
                     crop_grab_size = (crop_right-crop_left)*(crop_bottom-crop_top)*3
                     child_maintop2.send({"detect_mode":values['detect_mode']})
                     game = Game(playground_w,playground_h)
-                    game.set_goal(get_goal(values))
                     game.set_ball_num(values["ball_num"])
                     game.set_ball_image()
                     game.setup()
@@ -450,7 +502,7 @@ def subMain():
                 elapsed_times = []
             count += 1
             status_pre = status
-        
+            vs_mode_pre = values["vs_mode"]
         except:
             break
 
@@ -464,11 +516,29 @@ def subMain():
     print("Finished")
     return 0
 
+def make_bar(detected_eyes,values):
+    #bar H to V
+    out = []
+    for i in detected_eyes:
+        if values["switch_team"]:
+            out.append([i[0]+i[2]/2,i[1],i[0]+i[2]/2,i[1]+i[3]])
+        else:
+            out.append([i[0],i[1]+i[3]/4,i[0]+i[2],i[1]+i[3]/4])
+    return out
 
+
+
+def extend_eyes(detected_eyes,values):
+    out = []
+    a = values["bar_assist"]
+    for i in detected_eyes:
+        out.append([i[0]-a,i[1]-a//2,i[2]+2*a,i[3]+2*a])
+    return out
 
 def draw_goal(screen,l,t,r,b,values):
     if values["switch_team"]:
-        pass
+        cv2.line(screen,(l,t),(l,b),(200,0,0),GOAL_WIDTH)
+        cv2.line(screen,(r,t),(r,b),(0,0,200),GOAL_WIDTH)
     else:
         cv2.line(screen,(l,t),(r,t),(200,0,0),GOAL_WIDTH)
         cv2.line(screen,(l,b),(r,b),(0,0,200),GOAL_WIDTH)
@@ -495,10 +565,19 @@ def draw_goal(screen,l,t,r,b,values):
 def get_goal(values):
     buf = [None,None,None,None]
     if values["switch_team"]:
-        pass
+        if values['vs_mode']:
+            buf[0] = 0
+            buf[2] = 1
+        else:
+            buf[0] = 0
+            buf[2] = 0
     else:
-        buf[1] = 0
-        buf[3] = 1 
+        if values['vs_mode']:
+            buf[1] = 0
+            buf[3] = 1 
+        else:
+            buf[1] = 0
+            buf[3] = 0
     return buf
 """
     if values["bound1"] == "Team1":
