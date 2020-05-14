@@ -18,6 +18,10 @@ This is a Hockey game "KaoHockey" with online meeting tools.
 * OBS Studio [Download Page](https://obsproject.com/ja/download)
 * OBS Virtualcam 2.0.5 [Download Page](https://obsproject.com/forum/resources/obs-virtualcam.949/)
 
+# System Overview
+
+![sample](https://github.com/mizumasa/KaoHockey/blob/master/System.jpg "サンプル")
+
 # Usage(in case Zoom)
 
 1. Zoomでギャラリービューを使用する
