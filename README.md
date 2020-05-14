@@ -15,8 +15,8 @@ This is a Hockey game "KaoHockey" with online meeting tools.
 [Download zip](https://github.com/mizumasa/KaoHockey/releases/download/1.0/KaoHockey.zip)
 
 # Other Required Software
-* OBS Studio [Download](https://obsproject.com/ja/download)
-* OBS Virtualcam 2.0.5 [Download](https://obsproject.com/forum/resources/obs-virtualcam.949/)
+* OBS Studio [Download Page](https://obsproject.com/ja/download)
+* OBS Virtualcam 2.0.5 [Download Page](https://obsproject.com/forum/resources/obs-virtualcam.949/)
 
 # Usage(in case Zoom)
 
@@ -26,11 +26,24 @@ This is a Hockey game "KaoHockey" with online meeting tools.
 2. KaoHockey.exeを起動する
    Start KaoHockey.exe
 
+![sample](https://github.com/mizumasa/KaoHockey/blob/master/screen1.jpg "サンプル")
+
 3. Crop (Left,Top,Right,Bottom)のパラメーターを動かし、白枠がギャラリービューを囲むようにする
 　 Move the crop (left, top, right, bottom) parameters so that the white frame surrounds the gallery view
 
 4. 各種メニューを選択する
    Select various menus
+
+![sample](https://github.com/mizumasa/KaoHockey/blob/master/control.jpg "サンプル")
+
+| name | description |
+----|---- 
+| Team Mode                       | Change team setting |
+| VS Mode               | VS Mode or Cooperate Mode |
+| Face Ball             | Use your face image as a ball |
+| Detect Level                    | The size of face which system can detect (The smaller the slower faces are detected) |
+| Bar Assist 	  | Stretch the bar to make the game easier |
+
 
 5. Startボタンを押してゲームを開始する
    Press the Start button to start the game
@@ -43,11 +56,12 @@ This is a Hockey game "KaoHockey" with online meeting tools.
    
 8. 入力ソースにKaoHockeyのウィンドウを指定し、OBS Virtual Cameraプラグインを起動する
    Specify the KaoHockey window as the input source and start the OBS Virtual Camera plug-in
-   
+
+![sample](https://github.com/mizumasa/KaoHockey/blob/master/KaoHockeyOBS.jpg "サンプル")
+
 9. Zoom のカメラとしてOBS Cameraを認識させる（ゲーム画面が全プレーヤーに配信される）
    Recognize OBS Camera as Zoom camera (game screen is distributed to all players)
 
-![sample](https://github.com/mizumasa/KaoHockey/blob/master/control.jpg "サンプル")
 
 # Developer Requirement
 
