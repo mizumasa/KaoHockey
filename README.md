@@ -20,6 +20,9 @@ This is a Hockey game "KaoHockey" with online meeting tools.
 
 # System Overview
 
+* Player Device : 2 or 4 (Not recommended for groups of 5 or more due to delays in zoom video)
+* Host Device (Windows PC) : 1 (with KaoHockey and OBS Studio)
+
 ![sample](https://github.com/mizumasa/KaoHockey/blob/master/System.jpg "サンプル")
 
 # Usage(in case Zoom)
