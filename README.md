@@ -83,7 +83,14 @@ This is a Hockey game "KaoHockey" with online meeting tools.
    Recognize OBS Camera as Zoom camera (game screen is distributed to all players)
 
 
+
+
+
+
 # Developer Requirement
+
+顔ホッケーアプリはオープンソースで公開されており、自由に改変、二次利用が可能です。
+開発環境は以下の通りです。
 
 * Windows 8.1 or later (not supported on Mac OS or Linux)
 * Anaconda Python 3.5.0
@@ -103,4 +110,8 @@ This is a Hockey game "KaoHockey" with online meeting tools.
 conda create -n py35 python=3.5
 conda activate py35
 pip install dlib pysimplegui opencv-python pillow mss
+```
+# Usage
+```
+python main.py
 ```
