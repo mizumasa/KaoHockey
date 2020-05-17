@@ -1,5 +1,7 @@
 # KaoHockey
 
+顔ホッケーはオンライン会議ツールを使ったホッケーゲームです。
+
 Thank you for watching. 
 
 This is a Hockey game "KaoHockey" with online meeting tools.
@@ -12,14 +14,16 @@ This is a Hockey game "KaoHockey" with online meeting tools.
 * Windows 8.1 or later (not supported on Mac OS or Linux)
 
 # Download
+顔ホッケーアプリはこちらからダウンロードしてください。(zipファイルを解凍し、任意の場所に置いてください)
 * KaoHockey App [Download zip](https://github.com/mizumasa/KaoHockey/releases/download/1.0/KaoHockey.zip)
 
 # Other Required Software
+顔ホッケーアプリ以外にOBS Studioのインストールと、仮想カメラのプラグインのインストールが必要です。
 * OBS Studio [Download Page](https://obsproject.com/ja/download)
 * OBS Virtualcam 2.0.5 [Download Page](https://obsproject.com/forum/resources/obs-virtualcam.949/) (There is a link "Go to Download" on the right side of the page)
 
 # System Overview
-
+プレーヤーの推奨人数は2人か4人です。それ以上の人数でのプレイは、通信環境によって難しい場合があります。
 * Player Device : 2 or 4 (Not recommended for groups of 5 or more due to delays in zoom video)
 * Host Device (Windows PC) : 1 (with KaoHockey and OBS Studio)
 
@@ -27,7 +31,7 @@ This is a Hockey game "KaoHockey" with online meeting tools.
 
 # Usage(in case Zoom)
 
-1. Zoomでギャラリービューを使用する
+1. ホストPCのZoomでギャラリービューを使用する
 
    Use gallery view in zoom.
 
