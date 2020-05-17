@@ -82,11 +82,15 @@ This is a Hockey game "KaoHockey" with online meeting tools.
 
    Recognize OBS Camera as Zoom camera (game screen is distributed to all players)
 
+9. Startボタンを押して顔ホッケーを楽しんでください！
 
+   Press "Start" button. Enjoy KaoHockey!
 
-
-
-
+ 
+ 
+ 
+ 
+ 
 # Developer Requirement
 
 顔ホッケーアプリはオープンソースで公開されており、自由に改変、二次利用が可能です。
