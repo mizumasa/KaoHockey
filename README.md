@@ -16,7 +16,7 @@ This is a Hockey game "KaoHockey" with online meeting tools.
 
 # Other Required Software
 * OBS Studio [Download Page](https://obsproject.com/ja/download)
-* OBS Virtualcam 2.0.5 [Download Page](https://obsproject.com/forum/resources/obs-virtualcam.949/)
+* OBS Virtualcam 2.0.5 [Download Page](https://obsproject.com/forum/resources/obs-virtualcam.949/) (There is a link "Go to Download" on the right side of the page)
 
 # System Overview
 
